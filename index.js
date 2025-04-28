@@ -4,12 +4,11 @@ const fastifyOauth2 = require('@fastify/oauth2');
 const fastifyCookie = require('@fastify/cookie');
 const axios = require('axios');
 const dotenv = require('dotenv');
-import fastify from 'fastify'
-import metrics from 'fastify-metrics'
+const metrics = require('fastify-metrics');
 
 dotenv.config();
 
-server.register(metrics, { endpoint: '/metrics' })
+fastify.register(metrics, { endpoint: '/metrics' })
 
 fastify.register(fastifyCookie);
 
@@ -27,9 +26,9 @@ fastify.addHook('onRequest', (request, reply, done) => {
 		request.headers['Authorization'] = `Bearer ${token}`;
 	}
 	done();
+});
 
-
-server.get('/', async (request, reply) => {
+fastify.get('/', async (request, reply) => {
 	return 'pong\n'
 })
 
@@ -61,14 +60,6 @@ fastify.decorate('authenticate', async function (request, reply) {
 		console.error(err); // Loguer l'erreur si elle se produit
 		reply.code(401).send({ error: 'Unauthorized' });
 	}
-});
-
-
-// ROUTES
-
-// Route publique
-fastify.get('/', async (request, reply) => {
-	return 'pong\n';
 });
 
 // Route protégée
