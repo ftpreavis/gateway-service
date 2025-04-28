@@ -4,11 +4,15 @@ const fastifyOauth2 = require('@fastify/oauth2');
 const fastifyCookie = require('@fastify/cookie');
 const axios = require('axios');
 const dotenv = require('dotenv');
+import fastify from 'fastify'
+import metrics from 'fastify-metrics'
 
 dotenv.config();
 
-// Register plugins
+server.register(metrics, { endpoint: '/metrics' })
+
 fastify.register(fastifyCookie);
+
 fastify.register(fastifyJwt, {
 	secret: process.env.JWT_SECRET, // ⚠️ Remplacer par une vraie clé sécurisée en prod
 	cookie: {
@@ -23,6 +27,10 @@ fastify.addHook('onRequest', (request, reply, done) => {
 		request.headers['Authorization'] = `Bearer ${token}`;
 	}
 	done();
+
+
+server.get('/', async (request, reply) => {
+	return 'pong\n'
 })
 
 fastify.register(fastifyOauth2, {
@@ -105,9 +113,6 @@ fastify.get('/auth/google/callback', async (request, reply) => {
 				httpOnly: true,
 			})
 			.redirect('/protected');
-
-		// OU alors tu peux simplement envoyer le token :
-		// reply.send({ token: jwt });
 
 	} catch (err) {
 		fastify.log.error(err);
