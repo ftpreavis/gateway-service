@@ -1,24 +1,20 @@
 {
-  "name": "app",
+  "name": "gateway-service",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ftpreavis/gateway-service.git"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ftpreavis/gateway-service/issues"
-  },
-  "homepage": "https://github.com/ftpreavis/gateway-service#readme",
   "dependencies": {
-    "fastify": "^5.3.0",
+    "@fastify/jwt": "^9.1.0",
+    "@fastify/oauth2": "^8.1.2",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.3.2",
     "fastify-metrics": "^12.1.0"
   }
 }
