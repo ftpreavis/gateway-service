@@ -1,6 +1,2 @@
 node_modules/
-<<<<<<< HEAD
 .env
-=======
-.env
->>>>>>> dca1b80 (Fix: Dockerfile for prod)
