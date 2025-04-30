@@ -44,4 +44,45 @@ module.exports = async function (fastify, opts) {
             return reply.code(status).send(message);
         }
     });
+
+    //Update avatar
+    fastify.patch('/users/:idOrUsername/avatar', { preValidation: [fastify.authenticate] }, async (req, reply) => {
+        const { idOrUsername } = req.params;
+        const { avatar } = req.body;
+
+        try {
+            const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}/avatar`, { avatar });
+            return reply.send(response.data);
+        } catch (err) {
+            fastify.log.error(err);
+            const status = err.response?.status || 500;
+            const message = err.response?.data || { error: 'Avatar update failed' };
+            return reply.code(status).send(message);
+        }
+    });
+
+    // Get avatar
+    fastify.get('/users/:idOrUsername/avatar', async (req, reply) => {
+        try {
+            const { idOrUsername } = req.params;
+
+            //Get user profile
+            const userRes = await axios.get(`http://user-service:3000/users/${idOrUsername}`);
+            let avatarPath = userRes.data.avatar;
+
+            if (!avatarPath) {
+                // To replace by default avatar
+                avatarPath = '/uploads/avatars/default.png';
+            }
+            // proxy to serve media by the gateway
+            const avatarRes = await axios.get(`http://media-service:3000${avatarPath}`, { responseType: 'stream' });
+            reply.headers(avatarRes.headers);
+            return reply.send(avatarRes.data);
+        } catch (err) {
+            fastify.log.error('Avatar fetch failed' ,err);
+            const status = err.response?.status || 500;
+            const message = err.response?.data || { error: 'Could not fetch avatar' };
+            return reply.code(status).send(message);
+        }
+    });
 };
