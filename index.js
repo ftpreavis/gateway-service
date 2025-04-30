@@ -7,8 +7,11 @@ const metrics = require('fastify-metrics');
 
 dotenv.config();
 
-fastify.register(metrics, { endpoint: '/metrics' })
-fastify.register(require('./routes/googleAuth'))
+fastify.register(metrics, { endpoint: '/metrics' });
+fastify.register(require('./routes/googleAuth'));
+fastify.register(require('./routes/users'));
+fastify.register(require('./routes/normalAuth'));
+
 
 fastify.register(fastifyCookie);
 
