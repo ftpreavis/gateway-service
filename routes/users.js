@@ -51,6 +51,16 @@ module.exports = async function (fastify, opts) {
         const { avatar } = req.body;
 
         try {
+            // Get old avatar
+            const userRes = await axios.get(`http://user-service:3000/users/${idOrUsername}`);
+            const oldAvatar = userRes.data.avatar;
+
+            // Delete old avatar
+            if (oldAvatar && !oldAvatar.endsWith('default.png')) {
+                await axios.delete(`http://media-service:3000/delete/avatar`, {
+                    data: { path: oldAvatar },
+                });
+            }
             const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}/avatar`, { avatar });
             return reply.send(response.data);
         } catch (err) {
