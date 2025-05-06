@@ -6,8 +6,25 @@ module.exports = async function (fastify, opts) {
     fastify.post('/auth/signup', async (req, reply) => {
         try {
             const res = await axios.post(`${AUTH_SERVICE}/signup`, req.body);
+            const user = res.data;
 
-            return reply.send(res.data);
+            if (!user.id || !user.username || !user.role) {
+                return reply.code(500).send({ error: 'Invalid user data' });
+            }
+            const token = fastify.jwt.sign({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            })
+            reply
+                .setCookie('access_token', token, {
+                    path: '/',
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'Lax',
+                })
+                .send({ message: 'Login successful' });
         } catch (err) {
             const status = err.response?.status || 500;
             const data = err.response?.data || { error: 'Signup failed' };

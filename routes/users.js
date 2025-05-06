@@ -46,7 +46,7 @@ module.exports = async function (fastify, opts) {
     });
 
     //Update avatar
-    fastify.patch('/users/:idOrUsername/avatar', { preValidation: [fastify.authenticate] }, async (req, reply) => {
+    fastify.patch('/users/:idOrUsername/avatar', { preValidation: [fastify.authenticate, fastify.canEditUser] }, async (req, reply) => {
         const { idOrUsername } = req.params;
         const { avatar } = req.body;
 
