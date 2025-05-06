@@ -7,8 +7,7 @@ const metrics = require('fastify-metrics');
 
 dotenv.config();
 
-fastify.register(metrics, { endpoint: '/metrics' })
-fastify.register(require('./routes/googleAuth'))
+fastify.register(metrics, { endpoint: '/metrics' });
 
 fastify.register(fastifyCookie);
 
@@ -25,6 +24,7 @@ fastify.addHook('onRequest', (request, reply, done) => {
 	if (token) {
 		request.headers['Authorization'] = `Bearer ${token}`;
 	}
+	console.log('incoming: ', request.method, request.url);
 	done();
 });
 
@@ -40,8 +40,28 @@ fastify.decorate('authenticate', async function (request, reply) {
 			return reply.code(401).send('Unauthorized');
 		}
 		request.user = await request.jwtVerify(token);
+		console.log('🔐 Authenticated user:', request.user); // 👈
 	} catch (err) {
 		reply.code(401).send({ error: 'Unauthorized' });
+	}
+});
+
+fastify.decorate('isAdmin', async function (request, reply) {
+	if (request.user?.role !== 'ADMIN') {
+		return reply.code(403).send({ error: 'Access denied' });
+	}
+});
+
+fastify.decorate('canEditUser', async function (request, reply) {
+	const currentUser = request.user;
+	const { idOrUsername } = request.params;
+
+	const isSelfByUsername = currentUser.username === idOrUsername;
+	const isSelfById = !isNaN(idOrUsername) && currentUser.id === parseInt(idOrUsername);
+	const isAdmin = currentUser.role === 'ADMIN';
+
+	if (!isSelfByUsername && !isSelfById && !isAdmin) {
+		return reply.code(403).send({ error: 'Forbidden: not allowed to edit' });
 	}
 });
 
@@ -50,7 +70,11 @@ fastify.get('/protected', { preValidation: [fastify.authenticate] }, async (requ
 	return { msg: `Hello ${request.user.username || request.user.email}, you are authenticated.` };
 });
 
-
+fastify.ready(err => {
+	if (err) throw err;
+	console.log('Routes : ');
+	console.log(fastify.printRoutes());
+})
 
 // Start Server
 fastify.listen({ host: '0.0.0.0', port: 3000 }, (err, addr) => {
@@ -60,3 +84,8 @@ fastify.listen({ host: '0.0.0.0', port: 3000 }, (err, addr) => {
 	}
 	console.log(`Server listening at ${addr}`);
 });
+
+fastify.register(require('./routes/googleAuth'));
+fastify.register(require('./routes/users'));
+fastify.register(require('./routes/normalAuth'));
+fastify.register(require('./routes/friends'));
