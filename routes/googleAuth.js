@@ -25,22 +25,27 @@ module.exports = async function (fastify, opts) {
                 return reply.code(400).send({error: 'Access token is missing'});
             }
 
-            console.log('Received access token: ', token.token.access_token);
-
             // Récupérer les infos utilisateur Google
             const userInfo = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: {Authorization: `Bearer ${token.token.access_token}`},
             });
 
-            console.log('userInfo', userInfo.data);
 
             const googleId = userInfo.data.id;
             const email = userInfo.data.email;
 
-            await axios.post('http://db-service:3000/users/google', { googleId, email });
+            const dbResponse = await axios.post('http://db-service:3000/users/google', { googleId, email });
+            const user = dbResponse.data;
 
+            if (!user.id || !user.username || !user.role) {
+                return reply.code(500).send({ error: 'Invalid user data' });
+            }
             // Créer un JWT pour cet utilisateur Google
-            const jwt = fastify.jwt.sign({googleId, email});
+            const jwt = fastify.jwt.sign({
+                id: user.id,
+                username: user.username,
+                role: user.role,
+            });
 
 
             // Soit tu rediriges avec le JWT en cookie
@@ -48,6 +53,8 @@ module.exports = async function (fastify, opts) {
                 .setCookie('access_token', jwt, {
                     path: '/',
                     httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'Lax',
                 })
                 .redirect('/protected');
 
