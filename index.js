@@ -1,18 +1,19 @@
 const fastify = require('fastify')({ logger: true });
 const fastifyJwt = require('@fastify/jwt');
 const fastifyOauth2 = require('@fastify/oauth2');
+const { getVaultValue } = require('./middleware/vault-client');
 const fastifyCookie = require('@fastify/cookie');
-const dotenv = require('dotenv');
+require('dotenv').config();
 const metrics = require('fastify-metrics');
-
-dotenv.config();
 
 fastify.register(metrics, { endpoint: '/metrics' });
 
 fastify.register(fastifyCookie);
 
 fastify.register(fastifyJwt, {
-	secret: process.env.JWT_SECRET, // ⚠️ Remplacer par une vraie clé sécurisée en prod
+	secret: async (req, reply) => {
+		return getVaultValue('jwt', 'JWT_SECRET')
+	},
 	cookie: {
 		cookieName: 'access_token',
 		signed: false,
