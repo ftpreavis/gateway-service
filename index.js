@@ -77,6 +77,11 @@ fastify.ready(err => {
 	console.log(fastify.printRoutes());
 })
 
+fastify.register(require('./routes/googleAuth'));
+fastify.register(require('./routes/users'));
+fastify.register(require('./routes/normalAuth'));
+fastify.register(require('./routes/friends'));
+
 // Start Server
 fastify.listen({ host: '0.0.0.0', port: 3000 }, (err, addr) => {
 	if (err) {
@@ -85,8 +90,3 @@ fastify.listen({ host: '0.0.0.0', port: 3000 }, (err, addr) => {
 	}
 	console.log(`Server listening at ${addr}`);
 });
-
-fastify.register(require('./routes/googleAuth'));
-fastify.register(require('./routes/users'));
-fastify.register(require('./routes/normalAuth'));
-fastify.register(require('./routes/friends'));
