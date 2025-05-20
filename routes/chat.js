@@ -30,7 +30,7 @@ module.exports = async function (fastify, opts) {
 	};
 
 	// Messages
-	fastify.post('/messages', { preValidation: [fastify.authenticate, fastify.canEditUser] }, handle(req => proxy('post', '/messages', { data: req.body })));
+	fastify.post('/messages', { preValidation: [fastify.authenticate] }, handle(req => proxy('post', '/messages', { data: req.body })));
 
 	fastify.get('/messages/:userId', { preValidation: [fastify.authenticate] }, handle(req => {
 		const { userId: otherUserId } = req.params;
@@ -38,7 +38,7 @@ module.exports = async function (fastify, opts) {
 		return proxy('get', `/messages/${otherUserId}`, { params: { userId: currentUserId, take, skip } });
 	}));
 
-	fastify.patch('/messages/read', { preValidation: [fastify.authenticate, fastify.canEditUser] }, handle(req => proxy('patch', '/messages/read', { data: req.body })));
+	fastify.patch('/messages/read', { preValidation: [fastify.authenticate] }, handle(req => proxy('patch', '/messages/read', { data: req.body })));
 
 	// Unread counts
 	fastify.get('/messages/unread/total', { preValidation: [fastify.authenticate] }, handle(req => proxy('get', '/messages/unread/total', { params: req.query })));
@@ -48,7 +48,7 @@ module.exports = async function (fastify, opts) {
 	fastify.get('/conversations', { preValidation: [fastify.authenticate] }, handle(req => proxy('get', '/conversations', { params: req.query })));
 
 	// Block routes
-	fastify.post('/block', { preValidation: [fastify.authenticate, fastify.canEditUser] }, handle(req => proxy('post', '/block', { data: req.body })));
-	fastify.delete('/block', { preValidation: [fastify.authenticate, fastify.canEditUser] }, handle(req => proxy('delete', '/block', { data: req.body })));
+	fastify.post('/block', { preValidation: [fastify.authenticate] }, handle(req => proxy('post', '/block', { data: req.body })));
+	fastify.delete('/block', { preValidation: [fastify.authenticate] }, handle(req => proxy('delete', '/block', { data: req.body })));
 	fastify.get('/block', { preValidation: [fastify.authenticate] }, handle(req => proxy('get', '/block', { params: req.query })));
 };
