@@ -70,6 +70,7 @@ const metrics = require('fastify-metrics');
 	await fastify.register(require('./routes/users'));
 	await fastify.register(require('./routes/normalAuth'));
 	await fastify.register(require('./routes/friends'));
+	await fastify.register(require('./routes/matchs'));
 
 	// Démarre le serveur
 	fastify.listen({ host: '0.0.0.0', port: 3000 }, (err, addr) => {
