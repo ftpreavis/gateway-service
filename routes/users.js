@@ -95,4 +95,30 @@ module.exports = async function (fastify, opts) {
             return reply.code(status).send(message);
         }
     });
+
+    fastify.patch('/users/:idOrUsername', {
+        preValidation: [fastify.authenticate, fastify.canEditUser]
+    }, async (req, reply) => {
+        const { idOrUsername } = req.params;
+        const { username, bio, password } = req.body;
+
+        if (!username && !bio && !password) {
+            return reply.code(400).send({ error: 'No fileds to update' });
+        }
+
+        try {
+            const updatePayload = {};
+            if (username) updatePayload.username = username;
+            if (bio) updatePayload.bio = bio;
+            if (password) updatePayload.password = password;
+
+            const response = await axios.patch(`http://user-serivce:3000/users/${idOrUsername}`, updatePayload);
+            return reply.send(response.data);
+        } catch (err) {
+            fastify.log.error('User update failed' ,err);
+            const status = err.response?.status || 500;
+            const message = err.response?.data || { error: 'Could not update user' };
+            return reply.code(status).send(message);
+        }
+    });
 };
