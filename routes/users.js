@@ -100,25 +100,31 @@ module.exports = async function (fastify, opts) {
         preValidation: [fastify.authenticate, fastify.canEditUser]
     }, async (req, reply) => {
         const { idOrUsername } = req.params;
-        const { username, bio, password } = req.body;
+        const { username, biography, password } = req.body;
 
-        if (!username && !bio && !password) {
-            return reply.code(400).send({ error: 'No fileds to update' });
+        if (!username && !biography && !password) {
+            return reply.code(400).send({ error: 'No fields to update' });
         }
 
         try {
             const updatePayload = {};
             if (username) updatePayload.username = username;
-            if (bio) updatePayload.bio = bio;
+            if (biography) updatePayload.biography = biography;
             if (password) updatePayload.password = password;
 
-            const response = await axios.patch(`http://user-serivce:3000/users/${idOrUsername}`, updatePayload);
+            const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}`, updatePayload);
             return reply.send(response.data);
         } catch (err) {
-            fastify.log.error('User update failed' ,err);
-            const status = err.response?.status || 500;
-            const message = err.response?.data || { error: 'Could not update user' };
-            return reply.code(status).send(message);
+            const status = err.response?.status;
+            const message = err.response?.data;
+
+            fastify.log.error(`User update failed [${status || 500}]`, message || err.message);
+
+            if (status && message) {
+                return reply.code(status).send(message);
+            }
+
+            return reply.code(500).send({ error: 'Could not update user' });
         }
     });
 };
