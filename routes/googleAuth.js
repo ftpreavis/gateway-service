@@ -53,14 +53,7 @@ module.exports = async function (fastify, opts) {
                 role: user.role,
             });
 
-            reply
-                .setCookie("access_token", jwt, {
-                    path: "/",
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === "production",
-                    sameSite: "Lax",
-                })
-                .redirect("/protected");
+            reply.send(reply.data);
 
         } catch (err) {
             fastify.log.error(err);
