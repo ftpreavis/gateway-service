@@ -95,4 +95,36 @@ module.exports = async function (fastify, opts) {
             return reply.code(status).send(message);
         }
     });
+
+    fastify.patch('/users/:idOrUsername', {
+        preValidation: [fastify.authenticate, fastify.canEditUser]
+    }, async (req, reply) => {
+        const { idOrUsername } = req.params;
+        const { username, biography, password } = req.body;
+
+        if (!username && !biography && !password) {
+            return reply.code(400).send({ error: 'No fields to update' });
+        }
+
+        try {
+            const updatePayload = {};
+            if (username) updatePayload.username = username;
+            if (biography) updatePayload.biography = biography;
+            if (password) updatePayload.password = password;
+
+            const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}`, updatePayload);
+            return reply.send(response.data);
+        } catch (err) {
+            const status = err.response?.status;
+            const message = err.response?.data;
+
+            fastify.log.error(`User update failed [${status || 500}]`, message || err.message);
+
+            if (status && message) {
+                return reply.code(status).send(message);
+            }
+
+            return reply.code(500).send({ error: 'Could not update user' });
+        }
+    });
 };
