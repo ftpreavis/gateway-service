@@ -28,12 +28,10 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=builder /app/index.js ./
 COPY --from=builder /app/routes ./routes
 COPY --from=builder /app/middleware ./middleware
+COPY --from=builder /app/wait-for-vault.sh /wait-for-vault.sh
+RUN chmod +x /wait-for-vault.sh
 
 USER app
 
-# 5) Basic healthcheck (adjust path as needed)
-HEALTHCHECK --interval=10s --timeout=5s --start-period=5s \
-  CMD curl -f http://localhost:3000/metrics || exit 1
-
 EXPOSE 3000
-CMD ["node", "index.js"]
+CMD ["/bin/sh", "-c", "/wait-for-vault.sh && exec node index.js"]
