@@ -127,4 +127,24 @@ module.exports = async function (fastify, opts) {
             return reply.code(500).send({ error: 'Could not update user' });
         }
     });
+
+    // GDPR
+
+    fastify.post('/users/anonymize', { preValidation: [fastify.authenticate] }, async (req, reply) => {
+        const userId = req.user.id;
+
+        try {
+            const response = await axios.post(
+                `http://user-service:3000/users/${userId}/anonymize`,
+                {},
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            return reply.send(response.data);
+        } catch (err) {
+            fastify.log.error('Anonymized failed:' ,err);
+            const status = err.response?.status || 500;
+            const message = err.response?.data || { error: 'Anonymized failed' };
+            return reply.code(status).send(message);
+        }
+    });
 };
