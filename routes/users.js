@@ -1,6 +1,9 @@
 const axios = require('axios');
+const FormData = require('form-data');
 
 module.exports = async function (fastify, opts) {
+
+    await fastify.register(require('@fastify/multipart'));
 
     // Users list
     fastify.get('/users', async (req, reply) => {
@@ -46,30 +49,73 @@ module.exports = async function (fastify, opts) {
     });
 
     //Update avatar
-    fastify.patch('/users/:idOrUsername/avatar', { preValidation: [fastify.authenticate, fastify.canEditUser] }, async (req, reply) => {
+    // fastify.patch('/users/:idOrUsername/avatar', { preValidation: [fastify.authenticate, fastify.canEditUser] }, async (req, reply) => {
+    //     const { idOrUsername } = req.params;
+    //     const { avatar } = req.body;
+    //
+    //     try {
+    //         // Get old avatar
+    //         const userRes = await axios.get(`http://user-service:3000/users/${idOrUsername}`);
+    //         const oldAvatar = userRes.data.avatar;
+    //
+    //         // Delete old avatar
+    //         if (oldAvatar && !oldAvatar.endsWith('default.png')) {
+    //             await axios.delete(`http://media-service:3000/delete/avatar`, {
+    //                 data: { path: oldAvatar },
+    //             });
+    //         }
+    //         const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}/avatar`, { avatar });
+    //         return reply.send(response.data);
+    //     } catch (err) {
+    //         fastify.log.error(err);
+    //         const status = err.response?.status || 500;
+    //         const message = err.response?.data || { error: 'Avatar update failed' };
+    //         return reply.code(status).send(message);
+    //     }
+    // });
+
+    fastify.patch('/users/:idOrUsername/avatar', {
+        preValidation: [fastify.authenticate, fastify.canEditUser],
+    }, async (req, reply) => {
         const { idOrUsername } = req.params;
-        const { avatar } = req.body;
+        const data = await req.file(); // récupère le fichier envoyé
+        console.log("📦 Fichier reçu:", data.filename, data.mimetype, data.file);
 
         try {
-            // Get old avatar
+            // Envoyer le fichier au media-service
+            const form = new FormData();
+            form.append('file', data.file, data.filename); // 🔧 FIX: compatible avec form-data
+
+            const uploadRes = await axios.post('http://media-service:3000/upload/avatar', form, {
+                headers: form.getHeaders()
+            });
+            const avatarPath = uploadRes.data.path;
+
+            // Récupérer l'ancien avatar
             const userRes = await axios.get(`http://user-service:3000/users/${idOrUsername}`);
             const oldAvatar = userRes.data.avatar;
 
-            // Delete old avatar
+            // Supprimer l'ancien avatar s'il n'est pas par défaut
             if (oldAvatar && !oldAvatar.endsWith('default.png')) {
-                await axios.delete(`http://media-service:3000/delete/avatar`, {
-                    data: { path: oldAvatar },
+                await axios.delete('http://media-service:3000/delete/avatar', {
+                    data: { path: oldAvatar }
                 });
             }
-            const response = await axios.patch(`http://user-service:3000/users/${idOrUsername}/avatar`, { avatar });
-            return reply.send(response.data);
+
+            // Mettre à jour l'utilisateur avec le nouvel avatar
+            const updateRes = await axios.patch(`http://user-service:3000/users/${idOrUsername}/avatar`, {
+                avatar: avatarPath
+            });
+
+            return reply.send(updateRes.data);
         } catch (err) {
-            fastify.log.error(err);
+            req.log.error(err);
             const status = err.response?.status || 500;
             const message = err.response?.data || { error: 'Avatar update failed' };
             return reply.code(status).send(message);
         }
     });
+
 
     // Get avatar
     fastify.get('/users/:idOrUsername/avatar', async (req, reply) => {
@@ -125,6 +171,26 @@ module.exports = async function (fastify, opts) {
             }
 
             return reply.code(500).send({ error: 'Could not update user' });
+        }
+    });
+
+    // GDPR
+
+    fastify.post('/users/anonymize', { preValidation: [fastify.authenticate] }, async (req, reply) => {
+        const userId = req.user.id;
+
+        try {
+            const response = await axios.post(
+                `http://user-service:3000/users/${userId}/anonymize`,
+                {},
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            return reply.send(response.data);
+        } catch (err) {
+            fastify.log.error('Anonymized failed:' ,err);
+            const status = err.response?.status || 500;
+            const message = err.response?.data || { error: 'Anonymized failed' };
+            return reply.code(status).send(message);
         }
     });
 };
