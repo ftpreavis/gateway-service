@@ -227,5 +227,23 @@ module.exports = async function (fastify, opts) {
         }
     });
 
+    fastify.get('/users/search', async (req, reply) => {
+        const query = req.query.q;
+
+        if (!query || typeof query !== 'string' || query.length < 1) {
+            return reply.code(400).send({ error: 'Missing or invalid search query' });
+        }
+
+        try {
+            const res = await axios.get(`http://db-service:3000/users/search?q=${encodeURIComponent(query)}`);
+            return reply.send(res.data);
+        } catch (err) {
+            console.error('[GATEWAY] Failed to proxy user search', err.message);
+            return reply.code(err.response?.status || 500).send({
+                error: 'Failed to fetch search results',
+                details: err.response?.data || err.message,
+            });
+        }
+    })
 
 };
