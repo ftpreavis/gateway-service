@@ -85,6 +85,15 @@ module.exports = async function (fastify, opts) {
         getVaultValue("oauth_secret", "GOOGLE_CLIENT_SECRET"),
     ]);
 
+	fastify.get('/auth/google/config', async (request, reply) => {
+		try {
+			reply.send({ clientId: clientId });
+		} catch (err) {
+			console.error("[GATEWAY] OAuth callback failed:", err);
+			reply.code(500).send({ error: "OAuth callback failed", details: err.message });
+		};
+	});
+
     fastify.post('/auth/google/callback', async (request, reply) => {
         try {
             const { code } = request.body;
