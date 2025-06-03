@@ -8,7 +8,7 @@ const metrics = require('fastify-metrics');
 
 (async () => {
 	await fastify.register(require('@fastify/cors'), {
-		origin: "http://localhost:5173",
+		origin: process.env.NODE_ENV === 'production' ? "https://transcendance.charles-poulain.ovh" : "http://localhost:5173",
 		credentials: true,
 	});
 	const jwtSecret = await getVaultValue('jwt', 'JWT_SECRET');
