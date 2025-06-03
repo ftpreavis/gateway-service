@@ -193,4 +193,39 @@ module.exports = async function (fastify, opts) {
             return reply.code(status).send(message);
         }
     });
+
+    // Settings
+    fastify.get('/users/:id/settings', async (req, reply) => {
+        const userId = req.params.id;
+
+        try {
+            const res = await axios.get(`http://db-service:3000/users/${userId}/settings`);
+            return reply.send(res.data);
+        } catch (err) {
+            console.error('[GATEWAY] Failed to get user settings', err.message);
+            return reply.code(err.response?.status || 500)
+                .send({
+                    error: 'Could not find user settings',
+                    details: err.response?.data || err.message
+                });
+        }
+    });
+
+    fastify.patch('/users/:id/settings', async (req, reply) => {
+        const userId = req.params.id;
+        const payload = req.body;
+
+        try {
+            const res = await axios.patch(`http://db-service:3000/users/${userId}/settings`, payload);
+            return reply.send(res.data);
+        } catch (err) {
+            console.error('[GATEWAY] Failed to update user settings', err.message);
+            return reply.code(500).send({
+                error: 'Could not find user settings',
+                details: err.response?.data || err.message
+            });
+        }
+    });
+
+
 };
