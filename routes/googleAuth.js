@@ -103,7 +103,7 @@ module.exports = async function (fastify, opts) {
                 code,
                 client_id: clientId,
                 client_secret: clientSecret,
-                redirect_uri: process.env.FRONTEND_GOOGLE_CALLBACK_URI || "http://localhost:5173/auth/google/callback",
+                redirect_uri: process.env.GOOGLE_CALLBACK_URI || "http://localhost:5173/auth/google/callback",
                 grant_type: 'authorization_code',
             });
             const access_token = tokenRes.data.access_token;
