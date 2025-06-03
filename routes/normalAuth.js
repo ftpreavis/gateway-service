@@ -5,32 +5,36 @@ module.exports = async function (fastify, opts) {
 
     fastify.post('/auth/signup', async (req, reply) => {
         try {
-            const res = await axios.post(`${AUTH_SERVICE}/signup`, req.body);
-            const user = res.data;
+            await axios.post(`${AUTH_SERVICE}/signup`, req.body);
 
-            if (!user.id || !user.username || !user.role) {
-                return reply.code(500).send({ error: 'Invalid user data' });
-            }
-            const token = fastify.jwt.sign({
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-            })
-            reply
-                .setCookie('access_token', token, {
-                    path: '/',
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'Lax',
-                })
-                .send({ message: 'Login successful' });
+            // // Une fois le user créé, on le connecte directement
+            // const loginRes = await axios.post(`${AUTH_SERVICE}/login`, {
+            //     identifier: req.body.username,
+            //     password: req.body.password
+            // });
+
+            // const token = loginRes.data?.token;
+            //
+            // if (!token) {
+            //     console.error("[GATEWAY] Aucun token reçu après login.");
+            //     return reply.code(500).send({ error: "Login after signup failed (missing token)" });
+            // }
+            //
+            // reply
+            //     .setCookie('access_token', token, {
+            //         path: '/',
+            //         httpOnly: true,
+            //         // secure: process.env.NODE_ENV === 'production',
+            //     })
+            reply.send({ message: 'Signup successful' });
+
         } catch (err) {
             const status = err.response?.status || 500;
             const data = err.response?.data || { error: 'Signup failed' };
             return reply.code(status).send(data);
         }
     });
+
 
     fastify.post('/auth/login', async (req, reply) => {
         try {

@@ -7,6 +7,10 @@ require('dotenv').config();
 const metrics = require('fastify-metrics');
 
 (async () => {
+	await fastify.register(require('@fastify/cors'), {
+		origin: "http://localhost:5173",
+		credentials: true,
+	});
 	const jwtSecret = await getVaultValue('jwt', 'JWT_SECRET');
 
 	await fastify.register(metrics, { endpoint: '/metrics' });
